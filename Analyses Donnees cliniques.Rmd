@@ -1,0 +1,186 @@
+---
+title: "ANALYSES DONNEES CLINIQUES"
+author: "Serigne Fallou Mbacke NGOM"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## ======== RECODAGE DES VARIABLES ============
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(readxl)
+Arbo_clinic = (read_xlsx("C:/STAGE IPD EPIDEMIOLOGIE/Cliniques Arbo.xlsx"))
+Arbo_clinic = data.frame(Arbo_clinic)
+
+
+for (i in c ("NUMEPID", "SENTINEL","NUMEPID2", "AUT_SIGN", "AUT_SIGN2", "AUT_SIGN3")) {Arbo_clinic[, i]=as.character(Arbo_clinic[, i])}
+
+
+for (i in c("TEMP", "AGE_MOIS", "AGE", "SEM")){Arbo_clinic[, i]= as.numeric(Arbo_clinic[, i])}
+
+
+for (i in c("RM", "DS", "FORMSANIT", "N_MED", "ADRESSE", "SEXE", "FVR","TOUX", "DOUL_THOR", "TACHYPNEE", "GRIPPE", "CEPHALEES", "MYALG"  , "ARTHRALGIES" ,"ERUPCUTANE",
+  "D_ORBIT" , "HEMORR"  , "ARBOVIROSE" , "X1PLVTARBO", "PALUDISME", "TDR_YN"  ,  "TDR"  ,  "GE" ,   "FROTTIS" ,  "PALUCONF" , "DIAG", "AUT_DIAG",
+  "DIAG_PALU"  ,"AUTR_SIGN",  "MGORGE"   , "RHIN",  "ASTHENIE", "DYSPNE"  ,  "FRISSONS" ,"NAUSEES" ,  "DIARRHEES" , "VOMISSEMENTS" , "ICTERE" ,      
+ "NEUROL" , "R_NUQUE" , "GANGLION"  ,  "SPLENOMEGALIE" ,"ANEMIE"     ,   "AUT_SIGN"    ,  "AUT_SIGN2"   ,  "AUT_SIGN3"  ,   "VOYAGE"  ,     "TTT"   ,       
+ "ATBT"    ,      "PREC_ATB"  ,    "AT_PALU"  ,     "ATHIS"    ,     "AT_PYR"    ,    "BRONC"  ,    "RET_DOM"    ,   "HOSP"       ,   "DCD"     ,      "SURVEIL_AMB"  ,"AUT_EVOL"    ,  "EVOL" )){Arbo_clinic[, i]= factor(Arbo_clinic[, i])}
+
+
+for (i in c('FVR', 'TOUX', 'DOUL_THOR', 'TACHYPNEE' ,  'GRIPPE', 'CEPHALEES',  'MYALG',  'ARTHRALGIES', 'ERUPCUTANE',  'D_ORBIT' , 'HEMORR' ,  'ARBOVIROSE', 'PALUDISME', 'AUTR_SIGN' ,  'MGORGE' ,  'RHIN' , 'ASTHENIE', 'DYSPNE'  ,  'FRISSONS','NAUSEES',  'DIARRHEES', 'VOMISSEMENTS', 'ICTERE',   'NEUROL',   'R_NUQUE',  'GANGLION', 'SPLENOMEGALIE', 'SURVEIL_AMB', 'ANEMIE', 'TTT' , 'ATBT'  ,   'PREC_ATB'  ,  'AT_PALU' , 'ATHIS'  ,  'AT_PYR'  ,  'BRONC' )){
+  levels(Arbo_clinic[,i]) = c(paste(i, "Oui", sep = "_"), paste(i, "Non", sep = "_"))
+}
+
+
+for (i in c('TDR_YN', 'TDR',  'GE', 'FROTTIS',  'PALUCONF', 'X1PLVTARBO')){
+  levels(Arbo_clinic[, i])= c(paste(i, "Oui", sep = "_"), paste(i, "Non", sep = "_"), paste(i, "nsp", sep = "_"))
+}
+
+
+for (i in c("DAT_CST", "DAT_NAIS", "DAT_DEB", "DATPLVTGRIP")){ Arbo_clinic[, i]= as.Date(Arbo_clinic[, i], '%Y-%m-%d')}
+
+
+levels(Arbo_clinic[,'SEXE']) = c( "Homme","Femme", "Nsp")
+```
+
+
+
+## ======== RESUME DE LA BASE DE DONNEES ==========
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+summary(Arbo_clinic)
+```
+
+
+
+## ======== VISUALISATION DES DONNEES ==========
+```{r echo=FALSE, warning=FALSE}
+library("FactoMineR")
+library("factoextra")
+library('corrplot')
+
+
+Arbo_clin_active = Arbo_clinic[,c( "RM", "DS", "FORMSANIT", "N_MED", "ADRESSE", "SEXE", "FVR","TOUX", "DOUL_THOR", "TACHYPNEE", "GRIPPE", "CEPHALEES", "MYALG"  , "ARTHRALGIES" ,"ERUPCUTANE",
+  "D_ORBIT" , "HEMORR"  , "ARBOVIROSE" , "X1PLVTARBO", "PALUDISME", "TDR_YN"  ,  "TDR"  ,  "GE" ,   "FROTTIS" ,  "PALUCONF" ,"AUTR_SIGN",  "MGORGE"   , "RHIN",  "ASTHENIE", "DYSPNE"  ,  "FRISSONS" ,"NAUSEES" ,  "DIARRHEES" , "VOMISSEMENTS" , "ICTERE" ,      
+ "NEUROL" , "R_NUQUE" , "GANGLION"  ,  "SPLENOMEGALIE" ,"ANEMIE"     ,   "AUT_SIGN"    ,  "AUT_SIGN2"   ,  "AUT_SIGN3"  ,   "VOYAGE"  ,     "TTT"   ,       
+ "ATBT"    ,      "PREC_ATB"  ,    "AT_PALU"  ,     "ATHIS"    ,     "AT_PYR"    ,    "BRONC" ,      "SURVEIL_AMB"  ,'PALUCONF')]
+
+
+for (i in c("RM", "DS", "FORMSANIT", "N_MED", "ADRESSE", "SEXE")) {
+  plot(Arbo_clin_active[,i], main = colnames(Arbo_clin_active)[i],
+       ylab = "Count", col="steelblue", las = 2)
+  }
+```
+
+
+.
+## ======== ANALYSE DES CORRESPONDANCES MULTIPLES ============
+
+### ACM1:
+```{r echo=FALSE, warning=FALSE}
+mca.Arbo_clin <- MCA(Arbo_clin_active, graph = FALSE)
+eig.val <- get_eigenvalue(mca.Arbo_clin)
+
+fviz_screeplot (mca.Arbo_clin, addlabels = TRUE, ylim = c (0, 45))
+
+fviz_mca_var (mca.Arbo_clin, choice = "mca.cor",repel = TRUE, ggtheme = theme_minimal ())
+
+```
+
+*ANALYSES ET INTERPRETATION:*
+Nous constatons la formation de deux(2) groupes, meme si la quantitè d'information expliquèe par ces composantes est très faible:
+- Les informations sur le medecin, les districts, les règions, l'adresse et la forme sanitaire;
+- les autres variables sur les symptomes et autres informations.
+
+Ceci est normal dans la mesure ou il n'existe pas de lien entre les deux groupes (pas de biais lie a l'èchantillonage).
+
+
+Nous allons essayer de voir des combinaisions de variables qui vont donner des quantitès èlevèes d'informations expliquèes par des composantes principales.
+
+
+
+### ACM2:
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+Arbo_clin_active2 = Arbo_clinic[,c( "SEXE","TOUX", "DOUL_THOR", "TACHYPNEE", "GRIPPE")]
+mca.Arbo_clin2 <- MCA(Arbo_clin_active2, graph = FALSE)
+
+fviz_screeplot(mca.Arbo_clin2, addlabels = TRUE, ylim = c (0, 45))
+
+fviz_mca_biplot(mca.Arbo_clin2,axes = c(1, 2), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin2,axes = c(1, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin2,axes = c(2, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin2,axes = c(1, 4), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin2,axes = c(2, 4), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+```
+**ANALYSES ET INTERPRETATION:**
+Nous constatons que les quatres(4) premiers composantes expliques 97% de l'information. 
+L'analyse des composantes nous permet de dèduire qu'en gènèral:
+
+- Les patients grippès (GRIPPE_Oui), prèsentent des toux (TOUX_Oui) et vice versa. Et aussi ceux non grippès(GRIPPE_Non), ne prèsentent pas de toux (TOUX_Non) et vice versa.
+**Donc on pourra regrouper les deux variables en une seule : TOUX + GRIPPE = GRIP_T ou TOUX_G ...**
+
+- Les personnes qui prèsentent des douleurs thoraciques (DOUL_THOR_Oui), prèsentent egalement de la tachynèe (TACHYNEE_Oui). 
+
+- Il existe un faible rapprochement entre les deux(2) groupes de patients [avec toux (TOUX_Oui), ceux grippès (GRIPPE_Oui)] et [ceux presentant des tachynees (TACHYNEE_Oui)et douleurs thoraciques (DOUL_THOR_Oui)]. 
+
+```{r echo=FALSE, warning=FALSE}
+library("rpart")
+library("rpart.plot")
+library(tree)
+tree.mode2 <- rpart(TOUX ~ GRIPPE + DOUL_THOR + TACHYPNEE, method="class", data=Arbo_clin_active2)
+rpart.plot(tree.mode2)
+
+```
+L'arbre de dècision rejoint notre hypothèse selon laquelle dès l'instant que le patient est grippè, donc il prèsente des toux. 
+
+
+
+### ACM2:
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+Arbo_clin_active3 = Arbo_clinic[,c("ASTHENIE",  "FRISSONS" ,  "DIARRHEES")]
+mca.Arbo_clin3 <- MCA(Arbo_clin_active3, graph = FALSE)
+
+fviz_screeplot (mca.Arbo_clin3, addlabels = TRUE, ylim = c (0, 45))
+
+fviz_mca_biplot(mca.Arbo_clin3,axes = c(1, 2), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin3,axes = c(1, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin3,axes = c(2, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+```
+**ANALYSES ET INTERPRETATION :**
+L'analyse des trois(3) composantes nous permet de concluire que de maniere generale: Les patients avec Asthenie (ASTHENIE_Oui) presentent de diarrhees (DIARRHEES_Oui) et des frissons (FRISSONS_Oui).
+```{r echo=FALSE}
+tree.mode3 <- rpart(ASTHENIE ~  DIARRHEES + FRISSONS , method="class", data=Arbo_clin_active3)
+rpart.plot(tree.mode3)
+```
+**Dès l'instant que le patient prèsente de Diarrhèe, il est fort probable qu'il ait des frissons et des asthènie.** 
+
+Cela pourrait s'expliquer par le fait que la diarrhèe provoque la perte d'une grande quanttite d'eau ce qui va affaiblir l'organisme provoquant ainsi une une fatique physique ou asthènie
+
+
+
+### ACM3:
+```{r echo=FALSE, warning=FALSE, message=FALSE}
+Arbo_clin_active4 = Arbo_clinic[,c( "GRIPPE","FRISSONS" ,"NAUSEES" )]
+mca.Arbo_clin4 <- MCA(Arbo_clin_active4, graph = FALSE)
+
+fviz_screeplot (mca.Arbo_clin4, addlabels = TRUE, ylim = c (0, 45))
+
+fviz_mca_biplot(mca.Arbo_clin4,axes = c(1, 2), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin4,axes = c(1, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+fviz_mca_biplot(mca.Arbo_clin4,axes = c(2, 3), col.var='cos2', gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),repel = TRUE, ggtheme=theme_minimal())
+
+```
+L'analyse des trois(3) composantes nous permet de concluire que de maniere generale: Les patients qui presentent des nausèes (NAUSEES_Oui), ont egalement des frissons (FRISSONS_Oui).
+
+
+
+
+
+
