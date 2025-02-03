@@ -1,0 +1,95 @@
+## ===================== CHARGEMENT DES LIBRAIRIES ===================== ##
+# Charger les bibliothèques nécessaires
+library(readxl)
+library(FactoMineR)
+library(factoextra)
+library(corrplot)
+library(rpart)
+library(rpart.plot)
+library(tree)
+
+## ===================== IMPORTATION DES DONNÉES ===================== ##
+# Charger le fichier Excel contenant les données du laboratoire
+# Modifier le chemin du fichier selon l'emplacement correct
+labo_data <- read_xlsx("C:/STAGE_IPD_EPIDE/TBL_ARBO.xlsx")
+labo_data <- data.frame(labo_data)
+
+## ===================== RECODAGE DES VARIABLES ===================== ##
+# Convertir toutes les colonnes en facteur
+for (col in names(labo_data)) {
+  labo_data[, col] <- factor(labo_data[, col])
+}
+
+# Recoder la variable SEXE
+levels(labo_data$SEXE) <- c("Homme", "Femme")
+
+# Convertir certaines colonnes en caractères
+char_columns <- c("ID.EPI", "PRENOM_NOM", "NUMERO.REGISTRE")
+for (col in char_columns) {
+  labo_data[, col] <- as.character(labo_data[, col])
+}
+
+# Convertir certaines colonnes en date
+date_columns <- c("DTE_REC", "DTE_RESUL")
+for (col in date_columns) {
+  labo_data[, col] <- as.Date(labo_data[, col], '%Y-%m-%d')
+}
+
+## ===================== RECODAGE DES RÉSULTATS SÉROLOGIQUES ===================== ##
+# Recodage spécifique de certaines colonnes
+serology_columns <- c('IgM.EBOLA.ZAIRE_S', 'IgM.EBOLA.SOUDAN_S', 'IgM.MARBURG_S', 'IgM.LASSA_S')
+for (col in serology_columns) {
+  levels(labo_data[, col]) <- c(paste(col, "Non", sep = "_"), paste(col, "nsp", sep = "_"))
+}
+
+virus_columns <- c('DEN', 'WN', 'RVF', 'CHIK', 'CCHF')
+for (col in virus_columns) {
+  levels(labo_data[, col]) <- c(paste(col, "Non", sep = "_"))
+}
+
+multi_level_columns <- c('IgM.YF', 'ARN.CHIK', 'ARN.DEN', 'ARN.RVF', 'IGM.RVF')
+for (col in multi_level_columns) {
+  levels(labo_data[, col]) <- c(paste(col, "Oui", sep = "_"), paste(col, "Non", sep = "_"), paste(col, "nsp", sep = "_"), paste(col, "a_ver", sep = "_"))
+}
+
+## ===================== VISUALISATION DES DONNÉES ===================== ##
+# Générer des graphiques de distribution des variables sélectionnées
+plot_columns <- c('IgM.YF', 'ARN.CHIK', 'ARN.DEN', 'ARN.RVF', 'IGM.RVF',
+                  'DEN', 'WN', 'RVF', 'CHIK', 'CCHF', 'CENTRE', 'REGION', 'TYPE.DE.SITE', 'SEXE')
+
+for (col in plot_columns) {
+  plot(labo_data[, col], main = col, ylab = "Fréquence", col = "steelblue", las = 2)
+}
+
+## ===================== ANALYSE DES CORRESPONDANCES MULTIPLES ===================== ##
+# Analyse avec ACM pour ARN.RVF et ARN.WN
+mca_data1 <- labo_data[, c('ARN.RVF', 'ARN.WN')]
+mca_result1 <- MCA(mca_data1, graph = FALSE)
+
+fviz_screeplot(mca_result1, addlabels = TRUE, ylim = c(0, 45))
+fviz_mca_biplot(mca_result1, axes = c(1, 2), col.var = 'cos2',
+                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                 repel = TRUE, ggtheme = theme_minimal())
+
+# Arbre de décision pour ARN.RVF ~ ARN.WN
+decision_tree1 <- rpart(ARN.RVF ~ ARN.WN, method = "class", data = mca_data1)
+rpart.plot(decision_tree1)
+
+# Interprétation des résultats
+print("Les échantillons sans ARN RVF ne possèdent également pas d'ARN WN.")
+
+# Analyse ACM pour ARN.CHIK et ARN.RVF
+mca_data2 <- labo_data[, c('ARN.CHIK', 'ARN.RVF')]
+mca_result2 <- MCA(mca_data2, graph = FALSE)
+
+fviz_screeplot(mca_result2, addlabels = TRUE, ylim = c(0, 45))
+fviz_mca_biplot(mca_result2, axes = c(1, 2), col.var = 'cos2',
+                 gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                 repel = TRUE, ggtheme = theme_minimal())
+
+# Arbre de décision pour ARN.RVF ~ ARN.CHIK
+decision_tree2 <- rpart(ARN.RVF ~ ARN.CHIK, method = "class", data = mca_data2)
+rpart.plot(decision_tree2)
+
+# Conclusion et interprétation
+print("Relation entre ARN CHIK et ARN RVF observée avec ACM et arbre de décision.")
