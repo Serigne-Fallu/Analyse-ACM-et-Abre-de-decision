@@ -1,4 +1,4 @@
-# Analyses de données: Analyse de correspondance multiple et Arbre de decision
+# Analyse de correspondance multiple et Arbre de decision
 ## Description
 Ce répertoire contient un projet d'analyse des données de laboratoire concernant les infections virales, avec l'utilisation de techniques comme l'Analyse des Correspondances Multiples (ACM) et les arbres de décision en R.
 
